@@ -1,0 +1,31 @@
+<infinispan>
+    <jgroups>
+        <!-- Creates a secure JGroups stack named "encrypt-tcp" that extends the default TCP stack. -->
+        <stack name="encrypt-tcp" extends="tcp">
+            <!-- Adds a keystore from which nodes obtain secret keys. -->
+            <!-- Uses the stack.combine and stack.position attributes to insert SYM_ENCRYPT into the default TCP stack after VERIFY_SUSPECT. -->
+            <SSL_KEY_EXCHANGE keystore_name="keystore/localhost.keystore.p12"
+                              keystore_type="PKCS12"
+                              keystore_password="password"
+                              stack.combine="INSERT_AFTER"
+                              stack.position="VERIFY_SUSPECT"/>
+            <!-- Configures ASYM_ENCRYPT -->
+            <!-- Uses the stack.combine and stack.position attributes to insert ASYM_ENCRYPT into the default TCP stack before pbcast.NAKACK2. -->
+            <!-- The use_external_key_exchange = "true" attribute configures nodes to use the `SSL_KEY_EXCHANGE` protocol for certificate authentication. -->
+            <ASYM_ENCRYPT asym_keylength="2048"
+                          asym_algorithm="RSA"
+                          change_key_on_coord_leave = "false"
+                          change_key_on_leave = "false"
+                          use_external_key_exchange = "true"
+                          stack.combine="INSERT_BEFORE"
+                          stack.position="pbcast.NAKACK2"/>
+        </stack>
+    </jgroups>
+    <cache-container name="default" statistics="true">
+        <!-- Configures the cluster to use the JGroups stack. -->
+        <transport cluster="zowe-cluster"
+                   stack="encrypt-tcp"
+                   node-name="${infinispan.node.name:}"/>
+    </cache-container>
+</infinispan>
+
